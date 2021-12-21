@@ -49,7 +49,7 @@ void setup() {
 }
 
 void draw() {
-  background(255); //Refresh neutral background
+  background(180); //Background seen in fade out
   backGround(); //Add Background
 
   slider(); //Display Slider
@@ -97,7 +97,7 @@ void draw() {
   }
 
   if (mouseOver==false) {
-    trans=100; //Seethrough when no mouse over it
+    trans=180; //Seethrough when no mouse over it
   }
 
   //Fluently move Slider to Page position
@@ -163,10 +163,10 @@ void icon() { //Show icon above arrow
         tint(255, 200);
         image(fragment[p], pos[p]+(scl*3), 440 - (scl*4), scl*4, scl*4);//BIG ICON
       } else if (p-1==page || p+1==page) { //MEDIUM ICON
-        tint(255, 110);
+        tint(255, 160);
         image(fragment[p], (pos[p]+(scl*4)), 440 - (scl*3), scl*3, scl*3);
       } else { //SMALL ICON
-        tint(255, 110);
+        tint(255, 160);
         image(fragment[p], (pos[p]+(scl*5)), 440 - (scl*2), scl*2, scl*2);
       }
     } else if (mouseOver ==true) { //When mouse is over Icon
@@ -177,7 +177,7 @@ void icon() { //Show icon above arrow
         tint(255, 200);
         image(fragment[p], (pos[p]+(scl*4)), 420 - (scl*3), scl*3, scl*3);
       } else { //SMALL ICON
-        tint(255, 110);
+        tint(255, 160);
         image(fragment[p], (pos[p]+(scl*5)), 440 - (scl*2), scl*2, scl*2);
       }
     }
@@ -190,7 +190,9 @@ void backGround() {
     if (page ==pg && xpos >=pos[pg] && xpos < pos[pg+1]) {
       image(background[pg], 0, 0, width, height);
     } else if (page == pg +1 && xpos >=pos[pg] && xpos < pos[pg+1]) { //Transition to next image
+      tint(255,255+5*((pos[pg]+(dist(pos[0], 0, pos[1], 0)/2)-xpos)));
       image(background[pg], 0, 0, width, height);
+      tint(255,255);
       image(background[pg+1], (width- (((-(pos[pg]+(dist(pos[0], 0, pos[1], 0)/2)-xpos))/(pos[pg+1]-pos[pg]))*width*2) ), 0, width, height); //Slide
     } else if (page <= 0 && page == pg && xpos <= pos[0]) {
       image(background[0], 0, 0, width, height);
