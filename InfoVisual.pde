@@ -1,16 +1,29 @@
-//Carbon Infovisual Prototype Alpha
+//Carbon Infovisual Prototype Beta
 //Project can be found at:
 //https://github.com/mathijsvann/Carbon-Infovisual
 
-boolean mouseOver = false;
+boolean mouseOver = false; //Slider lock
 boolean lock = false;
+
+boolean locked = false;  //Pop-Up lock
+boolean mouseOverP = false;
+boolean popup = false;
+//Pop-Up x and y values
+int ax=0;
+int ey=0;
+int fx=0;
+int fy=0;
+
+boolean mouseOverCR = false; //Circle Right top
+boolean mouseOverCL = false; //Circle Left top
+
 int ypos=450; //Starting position
 int xpos;
 int xOffset = 0; 
 int yOffset = 0; 
 int trans =225;
 
-int n=7 ; //IMPORTANT: Amount of Pages. 
+int n=4 ; //IMPORTANT: Amount of Pages. 
 
 int [] pos = new int[n+1];
 int page=0; //Starting Page
@@ -19,9 +32,19 @@ int [] track = new int[scl*10];
 
 //Image Processing
 PImage[] fragment;
+PImage[] general;
+
 PImage[] background;
+int k = 2; //Amount of background images per folder. 2 -> A medium and great performance
+
+PImage[]otherIcons;
+int icons=2;
+
 String url="https://raw.githubusercontent.com/mathijsvann/Carbon-Infovisual/main/"; //Access online images stored in GitHub
-int number_images = n; //Amount of background
+
+int grbr=0; //General Bracket for progress
+
+int clicktimer=0;
 
 void setup() {
   size(800, 500); //Screen Size
@@ -33,7 +56,7 @@ void setup() {
     //fragment[k]=loadImage(str(k) + ".png"); //Offline Version
   }
 
-  //Load all background Images
+  //Load all General Images
   background=new PImage[n];
   for (int i=0; i<background.length; i++) {
     background[i]=loadImage(url + str(i) + ".jpg");
@@ -45,15 +68,144 @@ void setup() {
     pos[i]=(i+1)*width/(n+1)-(scl*5);
   }
 
+  //Load all General Images
+  general=new PImage[n];
+  for (int i=0; i<general.length; i++) {
+    general[i]=loadImage(url + str(i) + ".jpg");
+    //general[i]=loadImage(str(i) + ".jpg"); //Offline Version
+  }
+
+  //Load all Background Images
+  background=new PImage[n*k];
+  int r=0;
+  while (r<(n*k)) {
+    for (int z=0; z<n; z++) {
+      for (int i=0; i<k; i++) {
+        background[r]=loadImage(url + str(z) + "/" + str(i) + ".jpg");
+        r+=1;
+      }
+    }
+  }
+
+  //Load all Background Images
+  otherIcons=new PImage[icons];
+  for (int i=0; i<otherIcons.length; i++) {
+    otherIcons[i]=loadImage(url + "logonav/" + i + ".png");
+    //otherIcons[i]=loadImage("logonav/" + ".png"); //Offline Version
+  }
+
   xpos=pos[0]; //Starting position
 }
 
 void draw() {
-  background(180); //Background seen in fade out
+  background(200); //Background seen in fade out
   backGround(); //Add Background
+
+
+  //Draw Side Box Left
+  pushMatrix();
+  translate(20, 20);
+
+  //INSERT TEXT
+  //https://www.youtube.com/watch?v=woaR-CJEwqc Table Loading
+
+
+  fill(255, 160);
+  beginShape();
+  for (int a=0; a<90; a++) {
+    vertex(50 * sin(PI * 2 * a / 360), 50* cos(PI * 2 * a / 360));
+  }
+  vertex(250, 0);   //Size box.
+  vertex(250, 300);
+  vertex(0, 300);
+  endShape();
+  for (int q=0; q<40; q++) { //Create Fade Out 
+    fill(255, 160-q*4);
+    rect(0, 300+q*2, 250, 2);
+  }
+  popMatrix();
+
+  //Define if Mouse is Over Pop-Up on the Right
+  if (mouseX>width-220+ax && mouseX<width-20 && mouseY>20 && mouseY < 80+ey && mouseOverCR==false) { //Square Inside when not activated
+    mouseOverP = true;
+  } else {
+    mouseOverP =false;
+  }
+
+  if (popup == false && locked == true) {
+    popup = true;
+  } else if (popup == true && locked == true) {
+    popup = false;
+  }
+
+
+  //Draw Side Box Right
+  pushMatrix();
+  translate(width-270, 20);
+
+  fill(255, 160);
+  beginShape();
+  for (int a=270; a<360; a++) {
+    vertex(250 + (50 * sin(PI * 2 * a / 360)), 50* cos(PI * 2 * a / 360));
+  }
+  vertex(250, 60);   //D
+  vertex(50, 60); //C
+  vertex(50, 0); //B
+  endShape();
+
+  //Extending part
+  beginShape();
+  if (popup ==true) {
+    if (ey<80) {
+      ax -= (50/8);
+      ey += 10;
+      fx -= (50/8);
+      fy += 10;
+      locked=false;
+    }
+  } else if (popup==false) {
+    if (ey>0) {
+      ax += (50/8);
+      ey -= 10;
+      fx += (50/8);
+      fy -= 10;
+      locked=false;
+    }
+  }
+  vertex(50+ax, 0); //A
+  vertex (50, 0); //B
+  vertex(50, 60); //C
+  vertex(250, 60); //D
+  vertex(250, 60+ey); //E
+  vertex(50+fx, 60+ey); //F
+  endShape();
+
+  //Text
+  textSize(40);
+  fill(0);
+  text("Tips", 80, 35);
+
+  popMatrix();
+
+  //CircleLeft
+  if (dist(mouseX, mouseY, 20, 20)<50) {
+    mouseOverCL=true;
+  } else {
+    mouseOverCL=false;
+  }
+
+  //CircleRight
+  if (dist(mouseX, mouseY, width-20, 20)<50) {
+    mouseOverCR=true;
+  } else {
+    mouseOverCR=false;
+  }
 
   slider(); //Display Slider
   icon(); //Display Icons
+
+  //Calculate Bracket
+  grbr=0;
 
   //Determine if mouse is over position
   if (mouseX >= xpos && mouseX < xpos + scl*10) {  //X-Position. < instead of <= to make sure track[int(abs(mouseX-xpos))] doesn't create an error down the line
@@ -89,6 +241,24 @@ void draw() {
     mouseOver = false;
   }
 
+  //Inser Button Left
+  if (mouseOverCL==true) {
+    tint(255, 240);
+  } else {
+    tint(255, 160);
+  }
+  image(otherIcons[0], 10, 10, 40, 40);
+
+  //Insert Button Right
+  if (mouseOverCR==true) {
+    tint(255, 240);
+  } else {
+    tint(255, 160);
+  }
+  image(otherIcons[1], width-50, 10, 40, 40);
+
+  tint(255, 255);//Reset Transperancy
+
   //Determine what gridpoint is closest
   for (int i=0; i<n; i++) {
     if (dist(xpos, 0, pos[i], 0) <(width/(2*n+3))) {
@@ -113,12 +283,20 @@ void draw() {
 }
 
 void mousePressed() {
-  if (mouseOver == true) {
+  //MouseOverSlider
+  if (mouseOver == true) { 
     lock =true;
   } else {
     lock =false;
   }
   xOffset = mouseX-xpos;
+
+  //MouseOverPopUp
+  if (mouseOverP == true) {
+    locked=true;
+  } else {
+    locked=false;
+  }
 }
 
 void mouseDragged() {
@@ -156,7 +334,6 @@ void slider() { //Determine Slider
 void icon() { //Show icon above arrow
   fill(100);
   noStroke();
-  //println(fragment[0]);
   for (int p=0; p<n; p++) {
     if (mouseOver==false) {
       if (p==page) {
@@ -190,9 +367,9 @@ void backGround() {
     if (page ==pg && xpos >=pos[pg] && xpos < pos[pg+1]) {
       image(background[pg], 0, 0, width, height);
     } else if (page == pg +1 && xpos >=pos[pg] && xpos < pos[pg+1]) { //Transition to next image
-      tint(255,255+5*((pos[pg]+(dist(pos[0], 0, pos[1], 0)/2)-xpos)));
+      tint(255, 255+5*((pos[pg]+(dist(pos[0], 0, pos[1], 0)/2)-xpos)));
       image(background[pg], 0, 0, width, height);
-      tint(255,255);
+      tint(255, 255);
       image(background[pg+1], (width- (((-(pos[pg]+(dist(pos[0], 0, pos[1], 0)/2)-xpos))/(pos[pg+1]-pos[pg]))*width*2) ), 0, width, height); //Slide
     } else if (page <= 0 && page == pg && xpos <= pos[0]) {
       image(background[0], 0, 0, width, height);
