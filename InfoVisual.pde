@@ -2,6 +2,8 @@
 //Project can be found at:
 //https://github.com/mathijsvann/Carbon-Infovisual
 
+int screenstate=0; //What state is the screen in
+
 boolean mouseOver = false; //Slider lock
 boolean lock = false;
 
@@ -14,8 +16,13 @@ int ey=0;
 int fx=0;
 int fy=0;
 
+float kWh=5000; //Starting value for demo purposes
+float kWhLM=5200; //Last Month
+
 boolean mouseOverCR = false; //Circle Right top
 boolean mouseOverCL = false; //Circle Left top
+boolean pressCR = false;
+boolean pressCL = false;
 
 int ypos=450; //Starting position
 int xpos;
@@ -38,7 +45,8 @@ PImage[] background;
 int k = 2; //Amount of background images per folder. 2 -> A medium and great performance
 
 PImage[]otherIcons;
-int icons=2;
+int icons=5; // [PLUS/SETTINGS/RETURN*2]
+int home=0;
 
 String url="https://raw.githubusercontent.com/mathijsvann/Carbon-Infovisual/main/"; //Access online images stored in GitHub
 
@@ -101,6 +109,21 @@ void draw() {
   background(200); //Background seen in fade out
   backGround(); //Add Background
 
+  //CircleLeft
+  if (dist(mouseX, mouseY, 20, 20)<50) {
+    mouseOverCL=true;
+  } else {
+    mouseOverCL=false;
+  }
+
+  //CircleRight
+  if (dist(mouseX, mouseY, width-20, 20)<50) {
+    mouseOverCR=true;
+  } else {
+    mouseOverCR=false;
+  }
+
+  //INSERT OPTION OF WHAT SCREEN IT WILL SHOW.
 
   //Draw Side Box Left
   pushMatrix();
@@ -119,9 +142,12 @@ void draw() {
   vertex(250, 300);
   vertex(0, 300);
   endShape();
-  for (int q=0; q<40; q++) { //Create Fade Out 
-    fill(255, 160-q*4);
-    rect(0, 300+q*2, 250, 2);
+  if (screenstate==0) {
+    home=0; //Set home to 0.
+    for (int q=0; q<40; q++) { //Create Fade Out 
+      fill(255, 160-q*4);
+      rect(0, 300+q*2, 250, 2);
+    }
   }
   popMatrix();
 
@@ -132,6 +158,7 @@ void draw() {
     mouseOverP =false;
   }
 
+  //Determine Lock on Pop-Up
   if (popup == false && locked == true) {
     popup = true;
   } else if (popup == true && locked == true) {
@@ -155,7 +182,7 @@ void draw() {
 
   //Extending part
   beginShape();
-  if (popup ==true) {
+  if (popup ==true && screenstate==0) {
     if (ey<80) {
       ax -= (50/8);
       ey += 10;
@@ -163,13 +190,18 @@ void draw() {
       fy += 10;
       locked=false;
     }
-  } else if (popup==false) {
+  } else if (popup==false && screenstate==0) {
     if (ey>0) {
       ax += (50/8);
       ey -= 10;
       fx += (50/8);
       fy -= 10;
       locked=false;
+    } else if (screenstate!=0) {
+      ax = 0;
+      ey = 0;
+      fx = 0;
+      fy = 0;
     }
   }
   vertex(50+ax, 0); //A
@@ -187,76 +219,99 @@ void draw() {
 
   popMatrix();
 
-  //CircleLeft
-  if (dist(mouseX, mouseY, 20, 20)<50) {
-    mouseOverCL=true;
-  } else {
-    mouseOverCL=false;
-  }
-
-  //CircleRight
-  if (dist(mouseX, mouseY, width-20, 20)<50) {
-    mouseOverCR=true;
-  } else {
-    mouseOverCR=false;
-  }
-
   slider(); //Display Slider
   icon(); //Display Icons
 
   //Calculate Bracket
   grbr=0;
 
-  //Determine if mouse is over position
-  if (mouseX >= xpos && mouseX < xpos + scl*10) {  //X-Position. < instead of <= to make sure track[int(abs(mouseX-xpos))] doesn't create an error down the line
-    if (mouseY >= ypos+50 && mouseY <= ypos + 300) {  //Y-Position rect.
-      mouseOver = true;
-      trans=225;
-    }
+  if (screenstate==0) { //Determine if Screen is in the main state
+    //Determine if mouse is over position
+    if (mouseX >= xpos && mouseX < xpos + scl*10) {  //X-Position. < instead of <= to make sure track[int(abs(mouseX-xpos))] doesn't create an error down the line
+      if (mouseY >= ypos+50 && mouseY <= ypos + 300) {  //Y-Position rect.
+        mouseOver = true;
+        trans=225;
+      }
 
-    //Determine if over top triangle
-    if (mouseY >= ypos && mouseY < ypos+50) { //Left side triangle
-      for (int i=0; i<(scl*5); i++) {
-        track[i]=ypos+50-i;
-        if (int(mouseY) > track[int(abs(mouseX-xpos))]) { 
-          mouseOver = true;
-          trans=225;
-        } else {
-          mouseOver = false;
+      //Determine if over top triangle
+      if (mouseY >= ypos && mouseY < ypos+50) { //Left side triangle
+        for (int i=0; i<(scl*5); i++) {
+          track[i]=ypos+50-i;
+          if (int(mouseY) > track[int(abs(mouseX-xpos))]) { 
+            mouseOver = true;
+            trans=225;
+          } else {
+            mouseOver = false;
+          }
         }
-      }
-      for (int i=50; i<(scl*10); i++) { //Right side triangle
-        track[i]=ypos+(i-50);
-        if (int(mouseY) > track[int(abs(mouseX-xpos))]) {
-          mouseOver = true;
-          trans=225;
-        } else {
-          mouseOver = false;
+        for (int i=50; i<(scl*10); i++) { //Right side triangle
+          track[i]=ypos+(i-50);
+          if (int(mouseY) > track[int(abs(mouseX-xpos))]) {
+            mouseOver = true;
+            trans=225;
+          } else {
+            mouseOver = false;
+          }
         }
+      } else if (mouseY<ypos) {
+        mouseOver = false;
       }
-    } else if (mouseY<ypos) {
+    } else {
       mouseOver = false;
     }
-  } else {
-    mouseOver = false;
   }
+
+  println(home);
 
   //Inser Button Left
   if (mouseOverCL==true) {
     tint(255, 240);
+    if (pressCL ==true) {
+      if (screenstate!=1) {
+        screenstate=1;
+        home+=1;
+        pressCL=false;
+      } else if (screenstate ==1) {
+        screenstate=0;
+        pressCL=false;
+      }
+    }
   } else {
     tint(255, 160);
   }
-  image(otherIcons[0], 10, 10, 40, 40);
+  if (screenstate!=1) { 
+    image(otherIcons[0], 10, 10, 40, 40);
+  } else if (home<=1){ //Make sure that with multiple presses home buton appears
+    image(otherIcons[2], 10, 10, 40, 40);
+  }
+  else{
+  image(otherIcons[4], 10, 10, 40, 40);
+  }
 
   //Insert Button Right
   if (mouseOverCR==true) {
     tint(255, 240);
+    if (pressCR ==true) {
+      if (screenstate!=2) {
+        home+=1;
+        screenstate=2;
+        pressCR=false;
+      } else if (screenstate ==2) {
+        screenstate=0;
+        pressCR=false;
+      }
+    }
   } else {
     tint(255, 160);
   }
-  image(otherIcons[1], width-50, 10, 40, 40);
-
+  if (screenstate!=2) { 
+    image(otherIcons[1], width-50, 10, 40, 40);
+  } else if (home<=1){
+    image(otherIcons[3], width-50, 10, 40, 40);
+  }
+  else{
+    image(otherIcons[4], width-50, 10, 40, 40);
+  }
   tint(255, 255);//Reset Transperancy
 
   //Determine what gridpoint is closest
@@ -280,11 +335,19 @@ void draw() {
       xpos +=5;
     }
   }
+
+  //Draw ScreenStates 1 and 2 netural background
+  if (screenstate !=0) {
+    fill(255, 160);
+    rect(20, 320, 250, height-340); //Under Left Bar
+    rect(270, 20, width-490, height-40); //Middle Slap
+    rect(width-220, 80, 200, height-100); //Under Right Bar
+  }
 }
 
 void mousePressed() {
   //MouseOverSlider
-  if (mouseOver == true) { 
+  if (mouseOver == true && screenstate==0) { 
     lock =true;
   } else {
     lock =false;
@@ -292,10 +355,22 @@ void mousePressed() {
   xOffset = mouseX-xpos;
 
   //MouseOverPopUp
-  if (mouseOverP == true) {
+  if (mouseOverP == true && screenstate==0) {
     locked=true;
   } else {
     locked=false;
+  }
+
+  //Making Buttons Left and Right Clickable
+  if (mouseOverCR==true) {
+    pressCR=true;
+  } else {
+    pressCR=false;
+  }
+  if (mouseOverCL==true) {
+    pressCL=true;
+  } else {
+    pressCL=false;
   }
 }
 
@@ -307,6 +382,8 @@ void mouseDragged() {
 
 void mouseReleased() {
   lock = false;
+  pressCR=false;
+  pressCL=false;
 }
 
 void slider() { //Determine Slider
@@ -334,32 +411,34 @@ void slider() { //Determine Slider
 void icon() { //Show icon above arrow
   fill(100);
   noStroke();
-  for (int p=0; p<n; p++) {
-    if (mouseOver==false) {
-      if (p==page) {
-        tint(255, 200);
-        image(fragment[p], pos[p]+(scl*3), 440 - (scl*4), scl*4, scl*4);//BIG ICON
-      } else if (p-1==page || p+1==page) { //MEDIUM ICON
-        tint(255, 160);
-        image(fragment[p], (pos[p]+(scl*4)), 440 - (scl*3), scl*3, scl*3);
-      } else { //SMALL ICON
-        tint(255, 160);
-        image(fragment[p], (pos[p]+(scl*5)), 440 - (scl*2), scl*2, scl*2);
-      }
-    } else if (mouseOver ==true) { //When mouse is over Icon
-      if (p==page) {
-        tint(255, 255);
-        image(fragment[p], pos[p]+(scl*3), 400 - (scl*4), scl*4, scl*4);//BIG ICON
-      } else if (p-1==page || p+1==page) { //MEDIUM ICON
-        tint(255, 200);
-        image(fragment[p], (pos[p]+(scl*4)), 420 - (scl*3), scl*3, scl*3);
-      } else { //SMALL ICON
-        tint(255, 160);
-        image(fragment[p], (pos[p]+(scl*5)), 440 - (scl*2), scl*2, scl*2);
+  if (screenstate==0) {
+    for (int p=0; p<n; p++) {
+      if (mouseOver==false) {
+        if (p==page) {
+          tint(255, 200);
+          image(fragment[p], pos[p]+(scl*3), 440 - (scl*4), scl*4, scl*4);//BIG ICON
+        } else if (p-1==page || p+1==page) { //MEDIUM ICON
+          tint(255, 160);
+          image(fragment[p], (pos[p]+(scl*4)), 440 - (scl*3), scl*3, scl*3);
+        } else { //SMALL ICON
+          tint(255, 160);
+          image(fragment[p], (pos[p]+(scl*5)), 440 - (scl*2), scl*2, scl*2);
+        }
+      } else if (mouseOver ==true) { //When mouse is over Icon
+        if (p==page) {
+          tint(255, 255);
+          image(fragment[p], pos[p]+(scl*3), 400 - (scl*4), scl*4, scl*4);//BIG ICON
+        } else if (p-1==page || p+1==page) { //MEDIUM ICON
+          tint(255, 200);
+          image(fragment[p], (pos[p]+(scl*4)), 420 - (scl*3), scl*3, scl*3);
+        } else { //SMALL ICON
+          tint(255, 160);
+          image(fragment[p], (pos[p]+(scl*5)), 440 - (scl*2), scl*2, scl*2);
+        }
       }
     }
+    tint(255, 255); //Reset Tint
   }
-  tint(255, 255); //Reset Tint
 }
 
 void backGround() {
