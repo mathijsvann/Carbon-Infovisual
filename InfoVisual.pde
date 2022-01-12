@@ -1,6 +1,8 @@
 //Carbon Infovisual Prototype Beta
 //Project can be found at:
 //https://github.com/mathijsvann/Carbon-Infovisual
+//
+//Made by Mathijs van Nieuwenhuijsen, BSc
 
 int screenstate=0; //What state is the screen in
 
@@ -10,14 +12,20 @@ boolean lock = false;
 boolean locked = false;  //Pop-Up lock
 boolean mouseOverP = false;
 boolean popup = false;
+
 //Pop-Up x and y values
 int ax=0;
 int ey=0;
 int fx=0;
 int fy=0;
 
-float kWh=5000; //Starting value for demo purposes
+//Measure Progress
+float kWh=5200; //Starting value for demo purposes
 float kWhLM=5200; //Last Month
+int addingValue=0;
+boolean checkmark=false;
+
+int grbr=0; //General Bracket for progress
 
 boolean mouseOverCR = false; //Circle Right top
 boolean mouseOverCL = false; //Circle Left top
@@ -32,6 +40,10 @@ int trans =225;
 
 int n=4 ; //IMPORTANT: Amount of Pages. 
 
+boolean [] numkey = new boolean[12]; //Amount of keys
+int popupwarning=0;
+int popupAdd=0;
+
 int [] pos = new int[n+1];
 int page=0; //Starting Page
 int scl=10; //Only for width
@@ -45,17 +57,24 @@ PImage[] background;
 int k = 2; //Amount of background images per folder. 2 -> A medium and great performance
 
 PImage[]otherIcons;
-int icons=5; // [PLUS/SETTINGS/RETURN*2]
+int icons=7; // [PLUS/SETTINGS/RETURN*2/HOME/2*CALC]
 int home=0;
+
+//Get Fonts Variables
+PFont arial;
+PFont arialbld;
+PFont arialblk;
 
 String url="https://raw.githubusercontent.com/mathijsvann/Carbon-Infovisual/main/"; //Access online images stored in GitHub
 
-int grbr=0; //General Bracket for progress
-
-int clicktimer=0;
 
 void setup() {
   size(800, 500); //Screen Size
+
+  //Get Fonts
+  arial=createFont(url + "fonts/arial.ttf", 28); //Text for Numpad
+  arialbld=createFont(url +"fonts/arialbld.ttf", 100);
+  arialblk=createFont(url +"fonts/arialblk.ttf", 50);
 
   //Load all icons (from Flaticon)
   fragment=new PImage[n];
@@ -122,8 +141,6 @@ void draw() {
   } else {
     mouseOverCR=false;
   }
-
-  //INSERT OPTION OF WHAT SCREEN IT WILL SHOW.
 
   //Draw Side Box Left
   pushMatrix();
@@ -215,6 +232,7 @@ void draw() {
   //Text
   textSize(40);
   fill(0);
+  textFont(arialblk);
   text("Tips", 80, 35);
 
   popMatrix();
@@ -261,13 +279,12 @@ void draw() {
     }
   }
 
-  println(home);
-
   //Inser Button Left
   if (mouseOverCL==true) {
     tint(255, 240);
     if (pressCL ==true) {
       if (screenstate!=1) {
+        addingValue=0; //Reset Value when starting
         screenstate=1;
         home+=1;
         pressCL=false;
@@ -281,11 +298,10 @@ void draw() {
   }
   if (screenstate!=1) { 
     image(otherIcons[0], 10, 10, 40, 40);
-  } else if (home<=1){ //Make sure that with multiple presses home buton appears
+  } else if (home<=1) { //Make sure that with multiple presses home buton appears
     image(otherIcons[2], 10, 10, 40, 40);
-  }
-  else{
-  image(otherIcons[4], 10, 10, 40, 40);
+  } else {
+    image(otherIcons[4], 10, 10, 40, 40);
   }
 
   //Insert Button Right
@@ -306,10 +322,9 @@ void draw() {
   }
   if (screenstate!=2) { 
     image(otherIcons[1], width-50, 10, 40, 40);
-  } else if (home<=1){
+  } else if (home<=1) {
     image(otherIcons[3], width-50, 10, 40, 40);
-  }
-  else{
+  } else {
     image(otherIcons[4], width-50, 10, 40, 40);
   }
   tint(255, 255);//Reset Transperancy
@@ -343,6 +358,33 @@ void draw() {
     rect(270, 20, width-490, height-40); //Middle Slap
     rect(width-220, 80, 200, height-100); //Under Right Bar
   }
+  //When User can Add Data
+  if (screenstate==1) {
+    textFont(arial);
+    textSize(17);
+    fill(0, 250);
+    text("Enter total amount of km driven", (width/2)-115, 100);
+    textFont(arialblk);
+    if (popupwarning>0) {
+      fill(0, 250-popupwarning);
+    }
+    text(addingValue, (width/2)-115, 160);
+    notepad();
+    if (popupwarning>0) {
+      fill(#f32121, popupwarning);
+      textFont(arialblk);
+      text("VALUE TOO HIGH", (width/2)-230, 160);
+      popupwarning-=10;
+    }
+  }
+
+  //Add Succes of Adding Kilomters
+  if (popupAdd>0) {
+    fill(#21f330, popupAdd);
+    textFont(arialblk);
+    text("KILOMETERS SAVED", (width/2)-260, 160);
+    popupAdd-=10;
+  }
 }
 
 void mousePressed() {
@@ -371,6 +413,34 @@ void mousePressed() {
     pressCL=true;
   } else {
     pressCL=false;
+  }
+
+  //Calculations of Added Value 
+  for (int l=0; l<12; l++) {
+    if (numkey[l]==true && mouseOverCL==false) { //OverCL makes sure pop up of l=11 doesn't show up when pressed
+      if (l<9) { //Adding Value
+        addingValue=(addingValue*10)+l+1;
+        if (addingValue>=9999999) {
+          addingValue=0; //Add reset pop-up
+          popupwarning=500;
+        }
+        numkey[l]=false;
+      } else if (l==9) { //Reset
+        addingValue=0;
+        numkey[l]=false;
+      } else if (l==10) { //Press 0
+        addingValue=addingValue*10;
+        if (addingValue>=9999999) {
+          addingValue=0; //Add reset pop-up
+          popupwarning=500;
+        }
+      } else if (l==11) {
+        popupAdd=500;
+        kWh+=addingValue*0.83; //https://www.researchgate.net/figure/The-comparison-of-energy-consumption-of-per-kilometer-in-fuel-vehicle-and-EV-From-figure_fig1_334693982
+        checkmark=true;
+        screenstate=0;
+      }
+    }
   }
 }
 
@@ -456,4 +526,53 @@ void backGround() {
       image(background[n-1], 0, 0, width, height);
     }
   }
+}
+
+void notepad() {    
+  pushMatrix();
+  translate((width/2)-120, 180); //Position Notepad
+  int numberpad=0;
+  for (int row=0; row<=3; row ++) { //Create a grid
+    for (int col=0; col<=2; col++) {
+      textFont(arial);
+      if (mouseX>(80*col)+5+(width/2)-120 && mouseX<(80*(col+1))-5+(width/2)-120 && mouseY>(50*row)+185 && mouseY<(50*(row+1)+175)) {
+        stroke(#79bcf2, 250);
+        strokeWeight(2);
+        fill(#79bcf2, 250);
+        numkey[numberpad]=true;
+      } else {
+        noStroke();
+        fill(#79bcf2, 180);
+        numkey[numberpad]=false;
+      }
+      rect((80*col)+5, (50*row)+5, 70, 40, 2);
+      fill(0, 220);
+      if (numberpad<9) {
+        text(numberpad+1, (80*col)+33, row*50+35);
+      } else if (numberpad ==10) {
+        text(0, (80*col)+33, row*50+35);
+      }
+      numberpad+=1;
+    }
+  }
+
+  //Add 2 Logo's
+  if (mouseX>5+((width/2)-120) && mouseX<75+((width/2)-120) && mouseY>335 && mouseY<375) {
+    tint(255, 245);
+    image(otherIcons[6], 25, 160, 30, 30);
+  } else {
+    tint(255, 170);
+    image(otherIcons[6], 25, 160, 30, 30);
+  }
+  if ((mouseX>165+((width/2)-120) && mouseX<235+((width/2)-120))&& mouseY>335 && mouseY<375) {
+    tint(255, 245);
+    image(otherIcons[5], 185, 160, 30, 30);
+  } else {
+    tint(255, 170);
+    image(otherIcons[5], 185, 160, 30, 30);
+  }
+
+  tint(255, 255);
+  noStroke();
+  popMatrix();
 }
