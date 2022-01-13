@@ -495,7 +495,11 @@ void draw() {
     //Added Values Strings
     for (int i=0; i<4; i++) { //-1 due to layout. looks better
       if (addedValues[i]!=0) {
+        textFont(arial);
+        textSize(21);
         text(addedValues[i] + " km by car", 450, 50*(i+1));
+        textFont(arialblk);
+        textSize(21);
         if (mouseX>750 && mouseX<780 && mouseY>50*(i+3)&& mouseY<50*(i+4)) {
           fill(#a01616, 240);
           deleteRow=i;
